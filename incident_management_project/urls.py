@@ -20,6 +20,7 @@ from django.urls import path, include  # Import include to include app URLs
 urlpatterns = [
     path('admin/', admin.site.urls),  # Admin panel URL
     path('auth/', include('authentication.urls')),  # Include the authentication app URLs
+    path('v1/',include('users.urls')),
     # Add other app URLs as needed
 ]
 

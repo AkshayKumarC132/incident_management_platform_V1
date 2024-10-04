@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     # 'incidents',
     # 'teams',
     'authentication',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
