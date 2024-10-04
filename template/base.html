@@ -1,0 +1,33 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}My Application{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">  <!-- Link to your CSS -->
+    {% load static %}
+</head>
+<body>
+    <header>
+        <h1>My Application</h1>
+        <nav>
+            <ul>
+                <li><a href="{% url 'home' %}">Home</a></li>
+                {% comment %} <li><a href="{% url 'client_list' %}">Clients</a></li>
+                <li><a href="{% url 'device_list' client_id=1 %}">Devices</a></li>  <!-- Adjust client ID as necessary --> {% endcomment %}
+                {% comment %} <li><a href="{% url 'logout' %}">Logout</a></li> {% endcomment %}
+            </ul>
+        </nav>
+    </header>
+    <main>
+        {% block content %}
+        <!-- Default content can go here -->
+        {% endblock %}
+    </main>
+    <footer>
+        <p>&copy; {{ year }} My Application</p>
+    </footer>
+</body>
+</html>

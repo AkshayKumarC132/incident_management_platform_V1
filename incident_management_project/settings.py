@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,7 +26,7 @@ SECRET_KEY = 'django-insecure-sar%9@0*8v!#y3ruc^vr$xt!11%lzlvo(&we()z4ca6zzjt+#9
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -39,8 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     
     'users',
-    'incidents',
-    'teams',
+    # 'incidents',
+    # 'teams',
     'authentication',
 ]
 
@@ -59,7 +60,7 @@ ROOT_URLCONF = 'incident_management_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR,"templates")],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

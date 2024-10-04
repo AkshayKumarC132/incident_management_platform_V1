@@ -1,0 +1,27 @@
+{% load static %}  <!-- Add this line at the top of your template -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">  <!-- Example of using static files -->
+</head>
+<body>
+    <h1>Register</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <div>
+            <label for="username">Username:</label>
+            <input type="text" name="username" id="username" required>
+        </div>
+        <div>
+            <label for="password">Password:</label>
+            <input type="password" name="password" id="password" required>
+        </div>
+        <button type="submit">Register</button>
+    </form>
+    <p><a href="{% url 'login' %}">Login here.</a></p>
+</body>
+</html>

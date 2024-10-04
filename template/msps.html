@@ -1,0 +1,47 @@
+{% load static %} 
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MSPs</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}"> <!-- Include your CSS file if needed -->
+</head>
+<body>
+    <h1>MSPs</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Created At</th>
+                <th>Actions</th> <!-- Optional column for action links -->
+            </tr>
+        </thead>
+        <tbody id="msp-list">
+            {% for msp in msps %}
+            <tr>
+                <td>{{ msp.id }}</td>
+                <td>{{ msp.name }}</td>
+                <td>{{ msp.created_at|date:"Y-m-d H:i:s" }}</td> <!-- Format the date for better readability -->
+                <td>
+                    <a href="{% url 'get_msp' msp.id %}">View</a> <!-- Link to view details of this MSP -->
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">No MSPs available.</td> <!-- Message when there are no MSPs -->
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Create New MSP</h2>
+    <form method="POST" action="{% url 'create_msp' %}">
+        {% csrf_token %}
+        <label for="name">Name:</label>
+        <input type="text" name="name" required><br>
+        <button type="submit">Create MSP</button>
+    </form>
+</body>
+</html>

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Client</title>
+</head>
+<body>
+    <h1>Create New Client</h1>
+    <form method="POST" action="{% url 'create_client' msp_id=msp.id %}">
+        {% csrf_token %}
+        <label for="name">Name:</label>
+        <input type="text" name="name" required><br>
+        <button type="submit">Create Client</button>
+    </form>
+    <p><a href="{% url 'list_clients' msp_id=msp.id %}">Back to Clients</a></p>
+</body>
+</html>

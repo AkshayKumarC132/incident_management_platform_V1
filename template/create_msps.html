@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create MSP</title>
+</head>
+<body>
+    <h1>Create New MSP</h1>
+    <form method="POST" action="{% url 'create_msp' %}">
+        {% csrf_token %}
+        <label for="name">Name:</label>
+        <input type="text" name="name" required><br>
+        <button type="submit">Create MSP</button>
+    </form>
+    <p><a href="{% url 'list_msps' %}">Back to MSPs</a></p>
+</body>
+</html>

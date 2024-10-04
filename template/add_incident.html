@@ -1,0 +1,13 @@
+<!-- add_incident.html -->
+{% extends 'base.html' %}
+
+{% block title %}Add Incident{% endblock %}
+
+{% block content %}
+<h2>Add Incident</h2>
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save Incident</button>
+</form>
+{% endblock %}

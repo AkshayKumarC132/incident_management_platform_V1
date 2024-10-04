@@ -1,0 +1,29 @@
+{% load static %} 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MSP Details</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}"> <!-- Include your CSS file if needed -->
+</head>
+<body>
+    <header>
+        <h1>MSP Details</h1>
+    </header>
+    <main>
+        <div class="msp-details">
+            <h2>{{ msp.name }}</h2>
+            <p><strong>Created At:</strong> {{ msp.created_at|date:"Y-m-d H:i:s" }}</p> <!-- Displaying the creation date in a readable format -->
+            <a href="{% url 'list_clients' msp.id %}">View Clients</a> <!-- Link to view clients associated with this MSP -->
+            <br>
+            <a href="{% url 'create_client' msp.id %}">Add Client</a> <!-- Link to add a new client under this MSP -->
+            <br>
+            <a href="{% url 'list_msps' %}">Back to MSP List</a> <!-- Link to go back to the list of MSPs -->
+        </div>
+    </main>
+    <footer>
+        <p>&copy; {{ current_year }} Your Company Name</p> <!-- Optional footer -->
+    </footer>
+</body>
+</html>

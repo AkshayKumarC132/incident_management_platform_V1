@@ -1,0 +1,9 @@
+<!-- templates/client_list.html -->
+<h1>Client List</h1>
+<ul>
+    {% for client in clients %}
+        <li>{{ client.name }}</li>
+    {% empty %}
+        <li>No clients found.</li>
+    {% endfor %}
+</ul>

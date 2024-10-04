@@ -1,0 +1,14 @@
+{% extends "base.html" %}  <!-- Extend your base template -->
+
+{% block content %}
+<div class="container">
+    <h2>Delete Device</h2>
+    <p>Are you sure you want to delete the device "{{ device.name }}"?</p>
+    
+    <form method="POST">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Delete</button>
+        <a href="{% url 'device_list' client_id=device.client.id %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

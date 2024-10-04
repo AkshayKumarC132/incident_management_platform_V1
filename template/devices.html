@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Devices</title>
+</head>
+<body>
+    <h1>Devices</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Device Type</th>
+                <th>IP Address</th>
+                <th>Created At</th>
+            </tr>
+        </thead>
+        <tbody id="device-list">
+            <!-- Device list will be filled via JavaScript or backend rendering -->
+        </tbody>
+    </table>
+    <h2>Create New Device</h2>
+    <form method="POST" action="{% url 'create_device' client_id=client.id %}">
+        {% csrf_token %}
+        <label for="name">Name:</label>
+        <input type="text" name="name" required><br>
+        <label for="device_type">Device Type:</label>
+        <input type="text" name="device_type" required><br>
+        <label for="ip_address">IP Address:</label>
+        <input type="text" name="ip_address"><br>
+        <button type="submit">Create Device</button>
+    </form>
+    <p><a href="{% url 'list_clients' msp_id=client.msp.id %}">Back to Clients</a></p>
+</body>
+</html>

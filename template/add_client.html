@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Client</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}"> <!-- Optional CSS -->
+</head>
+<body>
+<h1>Add Client</h1>
+
+{% if error %}
+<div style="color: red;">{{ error }}</div> <!-- Display error message if exists -->
+{% endif %}
+
+<form method="POST">
+    {% csrf_token %}
+    <label for="client_name">Client Name:</label>
+    <input type="text" id="client_name" name="client_name" required>
+    <button type="submit">Add Client</button>
+</form>
+
+<a href="{% url 'client_list' %}">Back to Client List</a> <!-- Link back to the client list -->
+</body>
+</html>

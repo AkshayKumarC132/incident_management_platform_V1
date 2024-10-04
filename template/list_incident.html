@@ -1,0 +1,28 @@
+<!-- incident_list.html -->
+{% extends 'base.html' %}
+
+{% block title %}Incident List{% endblock %}
+
+{% block content %}
+<h2>Incident List</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Severity</th>
+            <th>Created At</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for incident in incidents %}
+        <tr>
+            <td>{{ incident.title }}</td>
+            <td>{{ incident.description }}</td>
+            <td>{{ incident.severity }}</td>
+            <td>{{ incident.created_at }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

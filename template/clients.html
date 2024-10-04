@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Clients</title>
+</head>
+<body>
+    <h1>Clients for MSP: {{ msp.name }}</h1> <!-- Display the name of the MSP -->
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Created At</th>
+                <th>Actions</th> <!-- Optional column for action links -->
+            </tr>
+        </thead>
+        <tbody id="client-list">
+            {% for client in clients %}
+            <tr>
+                <td>{{ client.id }}</td>
+                <td>{{ client.name }}</td>
+                <td>{{ client.created_at|date:"Y-m-d H:i:s" }}</td> <!-- Format the date for better readability -->
+                <td>
+                    <a href="{% url 'list_devices' client.id %}">View Devices</a> <!-- Link to view devices for this client -->
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">No clients available.</td> <!-- Message when there are no clients -->
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Create New Client</h2>
+    <form method="POST" action="{% url 'create_client' msp_id=msp.id %}">
+        {% csrf_token %}
+        <label for="name">Name:</label>
+        <input type="text" name="name" required><br>
+        <button type="submit">Create Client</button>
+    </form>
+
+    <p><a href="{% url 'list_msps' %}">Back to MSPs</a></p>
+</body>
+</html>
