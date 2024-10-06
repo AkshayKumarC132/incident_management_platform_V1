@@ -1,70 +1,137 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        /* General body styles */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9; /* Light background */
+            color: #333; /* Dark text color */
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Container styling */
+        .container {
+            max-width: 400px; /* Maximum width of the form */
+            margin: 50px auto; /* Centering the container */
+            padding: 20px; /* Padding around the form */
+            background-color: #ffffff; /* White background for the form */
+            border-radius: 8px; /* Rounded corners */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+        }
+
+        /* Heading styles */
+        h2 {
+            text-align: center; /* Center the heading */
+            color: #4A90E2; /* Primary color */
+        }
+
+        /* Form element styles */
+        form {
+            display: flex; /* Use flexbox for form layout */
+            flex-direction: column; /* Stack elements vertically */
+        }
+
+        /* Label styling */
+        label {
+            margin-bottom: 5px; /* Space between label and input */
+            font-weight: bold; /* Make labels bold */
+        }
+
+        /* Input field styling */
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        select {
+            padding: 10px; /* Padding inside the input fields */
+            border: 1px solid #ccc; /* Light gray border */
+            border-radius: 4px; /* Rounded corners */
+            margin-bottom: 15px; /* Space below input fields */
+            font-size: 14px; /* Font size for input fields */
+            transition: border-color 0.3s; /* Transition effect on focus */
+        }
+
+        /* Input focus styling */
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="password"]:focus,
+        select:focus {
+            border-color: #4A90E2; /* Change border color on focus */
+            outline: none; /* Remove default outline */
+        }
+
+        /* Button styling */
+        button {
+            padding: 10px; /* Padding for button */
+            background-color: #4A90E2; /* Primary button color */
+            color: white; /* Text color */
+            border: none; /* No border */
+            border-radius: 4px; /* Rounded corners */
+            cursor: pointer; /* Pointer cursor on hover */
+            font-size: 16px; /* Font size */
+            transition: background-color 0.3s; /* Transition effect on hover */
+        }
+
+        /* Button hover styling */
+        button:hover {
+            background-color: #357ABD; /* Darker blue on hover */
+        }
+
+        /* Link styling */
+        a {
+            color: #4A90E2; /* Link color */
+            text-decoration: none; /* Remove underline */
+        }
+
+        a:hover {
+            text-decoration: underline; /* Underline on hover */
+        }
+
+        /* Footer text styling */
+        p {
+            text-align: center; /* Center footer text */
+        }
+
+        
+    </style>
+    {% comment %} <link rel="stylesheet" href="{% static 'styles.css' %}">  <!-- Link to your CSS file --> {% endcomment %}
 </head>
 <body>
     <div class="container">
-        <h2 class="mt-5">Register</h2>
-        <form id="registerForm" method="POST" action="{% url 'register' %}">
+        <h2>Register</h2>
+        <form method="POST" action="{% url 'Signup' %}">
             {% csrf_token %}
-            <div class="form-group">
-                <label for="username">Username:</label>
-                <input type="text" class="form-control" id="username" name="username" required>
-            </div>
-            <div class="form-group">
-                <label for="first_name">First Name:</label>
-                <input type="text" class="form-control" id="first_name" name="first_name">
-            </div>
-            <div class="form-group">
-                <label for="last_name">Last Name:</label>
-                <input type="text" class="form-control" id="last_name" name="last_name">
-            </div>
-            <div class="form-group">
-                <label for="email">Email:</label>
-                <input type="email" class="form-control" id="email" name="email" required>
-            </div>
-            <div class="form-group">
-                <label for="password">Password:</label>
-                <input type="password" class="form-control" id="password" name="password" required>
-            </div>
-            <div class="form-group">
-                <label for="msp">MSP ID:</label>
-                <select class="form-control" id="msp" name="msp" required>
-                    <option value="">Select an MSP</option>
-                    {% for msp in msp_list %}
-                        <option value="{{ msp.id }}">{{ msp.name }}</option> <!-- Change 'name' to the field you want to display -->
-                    {% endfor %}
-                </select>
-            </div>
-            <button type="submit" class="btn btn-primary">Register</button>
+            <label for="username">Username:</label>
+            <input type="text" name="username" id="username" required>
+            
+            <label for="first_name">First Name:</label>
+            <input type="text" name="first_name" id="first_name" required>
+            
+            <label for="last_name">Last Name:</label>
+            <input type="text" name="last_name" id="last_name" required>
+            
+            <label for="email">Email:</label>
+            <input type="email" name="email" id="email" required>
+            
+            <label for="password">Password:</label>
+            <input type="password" name="password" id="password" required>
+            
+            <label for="msp">Select MSP:</label>
+            <select name="msp" id="msp" required>
+                <option value="">Select MSP</option>
+                {% for msp in msp_records %}
+                    <option value="{{ msp.id }}">{{ msp.name }}</option>
+                {% endfor %}
+            </select>
+            
+            <button type="submit">Register</button>
         </form>
-        <div id="responseMessage" class="mt-3"></div>
+        <p>Already have an account? <a href="{% url 'Login' %}">Login here</a></p>
     </div>
-
-    <script>
-        document.getElementById('registerForm').onsubmit = async function(event) {
-            event.preventDefault();
-            const formData = new FormData(this);
-            const response = await fetch(this.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}'
-                }
-            });
-            const result = await response.json();
-            const messageDiv = document.getElementById('responseMessage');
-            messageDiv.innerText = result.message;
-            if (response.ok) {
-                messageDiv.className = 'alert alert-success';
-            } else {
-                messageDiv.className = 'alert alert-danger';
-            }
-        };
-    </script>
 </body>
 </html>

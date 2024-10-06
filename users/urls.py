@@ -20,8 +20,8 @@ urlpatterns = [
     # path('devices/<int:device_id>/incidents/create/', views.create_incident, name='create_incident'),
     
     
-    path('signup',RegisterViewAPI.as_view(),name='Signup Page'),
-    path('login',LoginViewAPI.as_view(),name='Login'),
+    path('signup/',RegisterViewAPI.as_view(),name='Signup'),
+    path('login/',LoginViewAPI.as_view(),name='Login'),
     
     path('msp/', MSPListView.as_view(), name='msp-list'),  # List of all MSPS
     path('msp/<int:pk>/', MSPDetailView.as_view(), name='msp-detail'),  # Detail view for specific MSP
@@ -34,4 +34,8 @@ urlpatterns = [
     
     path('devices/<int:device_id>/incidents/', IncidentListView.as_view(), name='incident-list-create'),  # List and create incidents for a specific device
     path('devices/<int:device_id>/incidents/<int:pk>/', IncidentDetailView.as_view(), name='incident-detail'),  # Retrieve, update, delete a specific incident
+    
+    path('dashboard/', dashboard_view, name='dashboard'),
+    
+    path('custom-report/', generate_custom_report, name='generate_custom_report'),
 ]
