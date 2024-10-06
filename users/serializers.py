@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import *
+import math
 
 class RegisterSerializer(serializers.Serializer):
     username=serializers.CharField()
@@ -38,4 +39,11 @@ class IncidentSerializer(serializers.ModelSerializer):
         model = Incident
         fields = '__all__'  # This will include all fields in the model
         
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        # Handle NaN for predicted_resolution_time
+        predicted_resolution_time = representation.get('predicted_resolution_time', None)
+        if isinstance(predicted_resolution_time, float) and math.isnan(predicted_resolution_time):
+            representation['predicted_resolution_time'] = None  # or a default value, e.g., -1.0
+        return representation
         

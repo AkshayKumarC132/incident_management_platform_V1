@@ -53,5 +53,8 @@ class Incident(models.Model):
     resolved = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     
+    recommended_solution = models.TextField(null=True, blank=True)  # Solution suggested by ML
+    predicted_resolution_time = models.FloatField(null=True, blank=True)  # Predicted time (in hours)
+    
     def __str__(self):
         return self.title

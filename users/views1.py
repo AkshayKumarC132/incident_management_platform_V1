@@ -18,6 +18,8 @@ from django.contrib.auth.decorators import login_required
 from .models import MSP
 from .serializers import MSPSerializer
 from rest_framework.views import APIView
+from .ml_model import IncidentMLModel  # Assuming this is the ML integration part
+
 
 # created_at=datetime.datetime.now(utc)
 
@@ -137,6 +139,59 @@ class IncidentListView(generics.ListCreateAPIView):
     def get_queryset(self):
         device_id = self.kwargs['device_id']
         return Incident.objects.filter(device_id=device_id)
+    
+    def perform_create(self, serializer):
+        incident = serializer.save()
+
+        # Load the ML model
+        ml_model = IncidentMLModel()
+        try:
+            ml_model.load_models()
+        except Exception as e:
+            print(f"Error loading models: {e}")
+            return Response({'message': 'Error loading models'}, status=500)
+
+        # Extract features from the incident
+        features = ml_model.extract_features(incident)
+
+        # Predict the solution and time based on the incident
+        try:
+            predicted_solution = ml_model.predict_solution(incident)
+            predicted_time = ml_model.predict_time(incident)
+        except Exception as e:
+            print(f"Error predicting: {e}")
+            predicted_solution = "Default solution based on severity"
+            predicted_time = 2.0  # Default prediction in hours
+
+        # Update the incident with predictions
+        incident.recommended_solution = predicted_solution
+        incident.predicted_resolution_time = predicted_time
+        incident.save()
+
+        # Prepare the response data
+        response_data = {
+            "id": incident.id,
+            "title": incident.title,
+            "description": incident.description,
+            "resolved": incident.resolved,
+            "created_at": incident.created_at,
+            "recommended_solution": incident.recommended_solution,
+            "predicted_resolution_time": incident.predicted_resolution_time,
+            "device": incident.device.id if incident.device else None,
+            "severity": incident.severity,
+            "device_type": incident.device.device_type if incident.device else None,  # Safely access device_type
+        }
+
+        # Clean response data to handle NaN
+        cleaned_response = self.clean_response(response_data)
+
+        return Response(cleaned_response)
+
+    def clean_response(self, data):
+        # Replace NaN with None or a default value
+        return {key: (value if not isinstance(value, float) or not math.isnan(value) else None) 
+                for key, value in data.items()}
+
 
 @method_decorator(login_required(login_url='/account/login/'), name='dispatch')
 class IncidentDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -146,3 +201,55 @@ class IncidentDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         device_id = self.kwargs['device_id']
         return Incident.objects.filter(device_id=device_id)
+    
+    def perform_create(self, serializer):
+        incident = serializer.save()
+
+        # Load the ML model
+        ml_model = IncidentMLModel()
+        try:
+            ml_model.load_models()
+        except Exception as e:
+            print(f"Error loading models: {e}")
+            return Response({'message': 'Error loading models'}, status=500)
+
+        # Extract features from the incident
+        features = ml_model.extract_features(incident)
+
+        # Predict the solution and time based on the incident
+        try:
+            predicted_solution = ml_model.predict_solution(incident)
+            predicted_time = ml_model.predict_time(incident)
+        except Exception as e:
+            print(f"Error predicting: {e}")
+            predicted_solution = "Default solution based on severity"
+            predicted_time = 2.0  # Default prediction in hours
+
+        # Update the incident with predictions
+        incident.recommended_solution = predicted_solution
+        incident.predicted_resolution_time = predicted_time
+        incident.save()
+
+        # Prepare the response data
+        response_data = {
+            "id": incident.id,
+            "title": incident.title,
+            "description": incident.description,
+            "resolved": incident.resolved,
+            "created_at": incident.created_at,
+            "recommended_solution": incident.recommended_solution,
+            "predicted_resolution_time": incident.predicted_resolution_time,
+            "device": incident.device.id if incident.device else None,
+            "severity": incident.severity,
+            "device_type": incident.device.device_type if incident.device else None,  # Safely access device_type
+        }
+
+        # Clean response data to handle NaN
+        cleaned_response = self.clean_response(response_data)
+
+        return Response(cleaned_response)
+
+    def clean_response(self, data):
+        # Replace NaN with None or a default value
+        return {key: (value if not isinstance(value, float) or not math.isnan(value) else None) 
+                for key, value in data.items()}
