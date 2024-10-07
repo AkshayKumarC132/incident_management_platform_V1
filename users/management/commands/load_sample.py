@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from users.models import Incident, Device, Severity, Client, MSP  # Import MSP
+from users.models import Incident, Device, Severity, Client, MSP
 import random
 from datetime import datetime, timedelta
 
@@ -7,110 +7,99 @@ class Command(BaseCommand):
     help = 'Load sample incident data into the database'
 
     def handle(self, *args, **kwargs):
-        # Create sample MSPs
+        # Create sample MSPs with realistic names
         msps = [
-            {'name': 'MSP A'},
-            {'name': 'MSP B'},
-            {'name': 'MSP C'},
-            {'name': 'MSP D'},
-            {'name': 'MSP E'},
-            {'name': 'MSP F'},
-            {'name': 'MSP G'},
-            {'name': 'MSP H'},
-            {'name': 'MSP I'},
-            {'name': 'MSP J'},
-            {'name': 'MSP K'},
-            {'name': 'MSP L'},
+            {'name': 'Tech Solutions Inc.'},
+            {'name': 'Network Innovations LLC'},
+            {'name': 'CyberGuard Services'},
+            {'name': 'CloudOps Partners'},
+            {'name': 'DataSecure Corp.'},
+            {'name': 'IT Wizards'},
+            {'name': 'SysAdmin Experts'},
+            {'name': 'Digital Shield'},
+            {'name': 'Smart Networks'},
+            {'name': 'TechSavvy Solutions'},
         ]
 
         msp_objects = []
         for msp_data in msps:
             msp, created = MSP.objects.get_or_create(name=msp_data['name'])
-            msp_objects.append(msp)  # Store created MSPs
+            msp_objects.append(msp)
 
-        # Create sample clients, ensuring they are linked to an MSP
+        # Create sample clients linked to an MSP
         clients = [
-            {'name': 'Client A'},
-            {'name': 'Client B'},
-            {'name': 'Client C'},
-            {'name': 'Client D'},
-            {'name': 'Client E'},
-            {'name': 'Client F'},
-            {'name': 'Client G'},
-            {'name': 'Client H'},
-            {'name': 'Client I'},
-            {'name': 'Client J'},
-            {'name': 'Client K'},
-            {'name': 'Client L'},
+            {'name': 'Acme Corp.'},
+            {'name': 'Global Industries'},
+            {'name': 'Future Tech'},
+            {'name': 'Innovative Solutions'},
+            {'name': 'NextGen Systems'},
+            {'name': 'Eco-Friendly Enterprises'},
+            {'name': 'HealthPlus Services'},
+            {'name': 'Finance Group'},
+            {'name': 'Retail Dynamics'},
+            {'name': 'Travel Smart Co.'},
         ]
 
         client_objects = []
         for client_data in clients:
-            # Randomly assign an MSP to each client
             msp = random.choice(msp_objects)
             client, created = Client.objects.get_or_create(
                 name=client_data['name'], 
-                msp=msp  # Ensure to assign the MSP
+                msp=msp
             )
             client_objects.append(client)
 
-        # Sample devices to ensure device instances exist
+        # Sample devices with realistic types
         devices = [
-            {'name': 'Router A', 'device_type': 'Router'},
-            {'name': 'Switch B', 'device_type': 'Switch'},
-            {'name': 'Firewall C', 'device_type': 'Firewall'},
-            {'name': 'Server D', 'device_type': 'Server'},
-            {'name': 'Access Point E', 'device_type': 'Access Point'},
-            {'name': 'NAS F', 'device_type': 'NAS'},
-            {'name': 'Printer G', 'device_type': 'Printer'},
-            {'name': 'Laptop H', 'device_type': 'Laptop'},
-            {'name': 'Desktop I', 'device_type': 'Desktop'},
-            {'name': 'Tablet J', 'device_type': 'Tablet'},
-            {'name': 'Router K', 'device_type': 'Router'},
-            {'name': 'Switch L', 'device_type': 'Switch'},
-            {'name': 'Firewall M', 'device_type': 'Firewall'},
-            {'name': 'Server N', 'device_type': 'Server'},
-            {'name': 'Access Point O', 'device_type': 'Access Point'},
-            {'name': 'NAS P', 'device_type': 'NAS'},
-            {'name': 'Printer Q', 'device_type': 'Printer'},
-            {'name': 'Laptop R', 'device_type': 'Laptop'},
-            {'name': 'Desktop S', 'device_type': 'Desktop'},
-            {'name': 'Tablet T', 'device_type': 'Tablet'},
+            {'name': f'Router {i}', 'device_type': 'Router'} for i in range(1, 6)
+        ] + [
+            {'name': f'Switch {i}', 'device_type': 'Switch'} for i in range(1, 6)
+        ] + [
+            {'name': f'Firewall {i}', 'device_type': 'Firewall'} for i in range(1, 6)
+        ] + [
+            {'name': f'Server {i}', 'device_type': 'Server'} for i in range(1, 6)
+        ] + [
+            {'name': f'Access Point {i}', 'device_type': 'Access Point'} for i in range(1, 6)
         ]
 
         # Create devices if they do not exist
         for device_data in devices:
-            # Randomly assign a client to each device
             client = random.choice(client_objects)
             Device.objects.get_or_create(
                 name=device_data['name'], 
                 device_type=device_data['device_type'],
-                client=client  # Assign the client
+                client=client
             )
 
-        severities = ['Low', 'Medium', 'High']
-        num_of_incidents = 2000  # Increase the number of incidents for testing
+        severities = ['Low', 'Medium', 'High', 'Critical']
+        num_of_incidents = 500
 
         for i in range(num_of_incidents):
             severity_level = random.choice(severities)
-
-            # Ensure the severity exists or create it
             severity, created = Severity.objects.get_or_create(level=severity_level)
 
-            # Randomly select a device
             device = random.choice(Device.objects.all())
 
-            # Create a new incident
+            # Generate a more detailed incident description
+            descriptions = [
+                f'Network outage affecting {device.name}.',
+                f'Security breach detected on {device.name}.',
+                f'Maintenance required for {device.name}.',
+                f'Performance issues reported on {device.name}.',
+                f'Configuration error found on {device.name}.'
+            ]
+            
             inc = Incident.objects.create(
-                title=f'Sample Incident {i + 1} for {device.name}',
-                description=f'Description of the incident related to {device.name}.',
+                title=f'Incident #{i + 1}: Issue with {device.name}',
+                description=random.choice(descriptions),
                 device=device,
                 severity=severity,
-                resolved=random.choice([True, False]),  # Randomly resolve incidents
-                created_at=datetime.now() - timedelta(days=random.randint(1, 30)),  # Random date within the last 30 days
-                recommended_solution='Default solution based on severity',
-                predicted_resolution_time=random.uniform(1.0, 5.0)  # Random prediction time between 1 to 5 hours
+                resolved=random.choice([True, False]),
+                created_at=datetime.now() - timedelta(days=random.randint(0, 30)),
+                recommended_solution='Investigate and resolve based on severity level.',
+                predicted_resolution_time=random.uniform(0.5, 4.0)  # Random prediction time between 0.5 to 4 hours
             )
-            print(inc.title)
+            
+            print(f'Created: {inc.title}')
 
         self.stdout.write(self.style.SUCCESS(f'Successfully loaded {num_of_incidents} sample incidents.'))

@@ -24,10 +24,8 @@ from django.http import HttpResponse
 import pandas as pd
 from datetime import datetime
 from django.shortcuts import redirect
+from django.core.paginator import Paginator
 
-
-
-# created_at=datetime.datetime.now(utc)
 
 class RegisterViewAPI(APIView):
     serializer_class= RegisterSerializer
@@ -69,12 +67,6 @@ class RegisterViewAPI(APIView):
 
         return Response({"message":serializer.error_messages},status=status.HTTP_400_BAD_REQUEST)
     
-    # def get(self, request):
-    #     msp_records = MSP.objects.all()
-    #     serializer = MSPSerializer(msp_records, many=True)  # Use MSPSerializer
-    #     print(serializer.data)
-    #     return Response(serializer.data, status=status.HTTP_200_OK)
-    
 class LoginViewAPI(CreateAPIView):
     serializer_class = LoginSerialzier
     
@@ -88,10 +80,8 @@ class LoginViewAPI(CreateAPIView):
         if serializer.is_valid(raise_exception=True):
             username  = serializer.data['username']
             password = serializer.data['password']
-            print(username,password)
             # Authenticate the user
             user = authenticate(username=username, password=password)
-            print(user)
             if user is not None:
                 login(request, user)
                 return render(request, 'dashboard.html')
@@ -105,12 +95,21 @@ class MSPListView(generics.ListCreateAPIView):
     queryset = MSP.objects.all()  # Queryset to fetch all MSP instances
     serializer_class = MSPSerializer  # Serializer to convert queryset to JSON
     permission_classes = [permissions.IsAuthenticated]  # Ensure user is authenticated
+    
+    def get_queryset(self):
+        # Get the user's profile and filter MSPs based on the associated user
+        user_profile = self.request.user.profile
+        return MSP.objects.filter(userprofile=user_profile)
 
 @method_decorator(login_required(login_url='/account/login/'), name='dispatch')
 class MSPDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = MSP.objects.all()
     serializer_class = MSPSerializer
     permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        user_profile = self.request.user.profile
+        return MSP.objects.filter(userprofile=user_profile)
     
     
 @method_decorator(login_required(login_url='/account/login/'), name='dispatch')
@@ -119,8 +118,8 @@ class ClientListView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        msp_id = self.kwargs['msp_id']
-        return Client.objects.filter(msp_id=msp_id)
+        user_profile = self.request.user.profile
+        return Client.objects.filter(msp__userprofile=user_profile)
 
 @method_decorator(login_required(login_url='/account/login/'), name='dispatch')
 class ClientDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -128,8 +127,8 @@ class ClientDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        msp_id = self.kwargs['msp_id']
-        return Client.objects.filter(msp_id=msp_id)
+        user_profile = self.request.user.profile
+        return Client.objects.filter(msp__userprofile=user_profile)
     
 @method_decorator(login_required(login_url='/account/login/'), name='dispatch')
 class DeviceListView(generics.ListCreateAPIView):
@@ -137,8 +136,8 @@ class DeviceListView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        client_id = self.kwargs['client_id']
-        return Device.objects.filter(client_id=client_id)
+        user_profile = self.request.user.profile
+        return Device.objects.filter(client__msp__userprofile=user_profile)
 
 @method_decorator(login_required(login_url='/account/login/'), name='dispatch')
 class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -146,8 +145,8 @@ class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        client_id = self.kwargs['client_id']
-        return Device.objects.filter(client_id=client_id)
+        user_profile = self.request.user.profile
+        return Device.objects.filter(client__msp__userprofile=user_profile)
     
     
 @method_decorator(login_required(login_url='/account/login/'), name='dispatch')
@@ -156,24 +155,29 @@ class IncidentListView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        device_id = self.kwargs['device_id']
-        return Incident.objects.filter(device_id=device_id)
+        user_profile = self.request.user.profile
+        return Incident.objects.filter(device__client__msp__userprofile=user_profile)
     
     def perform_create(self, serializer):
         incident = serializer.save()
-        ml_model = IncidentMLModel()
+        model_time = IncidentMLModel()
+        model_time.load_models()  # Load models once at the start
 
         try:
-            ml_model.load_models()
-            predicted_solution = ml_model.predict_solution(incident)
-            predicted_time = ml_model.predict_time(incident)
+            # Predict resolution time and description using the incident object directly
+            predicted_time = model_time.predict_time(incident)  # Pass the incident object
+            predicted_desc = model_time.predict_solution(incident)  # Pass the incident object
         except Exception as e:
             print(f"Prediction error: {e}")
-            predicted_solution = "No prediction available"
+            predicted_desc = "No prediction available"
             predicted_time = 1.0  # Default resolution time
-
-        incident.recommended_solution = predicted_solution
+        
+        # Log the predictions vs actual values
+        print(f"Predicted Resolution Time: {predicted_time} minutes")
+        print(f"Predicted Description: {predicted_desc}")
+        # Update incident with predictions
         incident.predicted_resolution_time = predicted_time
+        incident.recommended_solution = predicted_desc
         incident.save()
 
         # Prepare the response data
@@ -207,35 +211,29 @@ class IncidentDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        device_id = self.kwargs['device_id']
-        return Incident.objects.filter(device_id=device_id)
+        user_profile = self.request.user.profile
+        return Incident.objects.filter(device__client__msp__userprofile=user_profile)
     
     def perform_create(self, serializer):
         incident = serializer.save()
+        model_time = IncidentMLModel()
+        model_time.load_models()  # Load models once at the start
 
-        # Load the ML model
-        ml_model = IncidentMLModel()
         try:
-            ml_model.load_models()
+            # Predict resolution time and description using the incident object directly
+            predicted_time = model_time.predict_time(incident)  # Pass the incident object
+            predicted_desc = model_time.predict_solution(incident)  # Pass the incident object
         except Exception as e:
-            print(f"Error loading models: {e}")
-            return Response({'message': 'Error loading models'}, status=500)
-
-        # Extract features from the incident
-        features = ml_model.extract_features(incident)
-
-        # Predict the solution and time based on the incident
-        try:
-            predicted_solution = ml_model.predict_solution(incident)
-            predicted_time = ml_model.predict_time(incident)
-        except Exception as e:
-            print(f"Error predicting: {e}")
-            predicted_solution = "Default solution based on severity"
-            predicted_time = 2.0  # Default prediction in hours
-
-        # Update the incident with predictions
-        incident.recommended_solution = predicted_solution
+            print(f"Prediction error: {e}")
+            predicted_desc = "No prediction available"
+            predicted_time = 1.0  # Default resolution time
+        
+        # Log the predictions vs actual values
+        print(f"Predicted Resolution Time: {predicted_time} minutes")
+        print(f"Predicted Description: {predicted_desc}")
+        # Update incident with predictions
         incident.predicted_resolution_time = predicted_time
+        incident.recommended_solution = predicted_desc
         incident.save()
 
         # Prepare the response data
@@ -261,14 +259,15 @@ class IncidentDetailView(generics.RetrieveUpdateDestroyAPIView):
         # Replace NaN with None or a default value
         return {key: (value if not isinstance(value, float) or not math.isnan(value) else None) 
                 for key, value in data.items()}
-        
-        
 
-from django.core.paginator import Paginator
+@login_required(login_url='/account/login/')
 def dashboard_view(request):
-    # Fetch all incidents and devices
-    incident_list = Incident.objects.all()
-    device_list = Device.objects.all()
+    # Fetch the user's profile to filter incidents and devices
+    user_profile = request.user.profile
+
+    # Fetch incidents and devices associated with the user's MSP
+    incident_list = Incident.objects.filter(device__client__msp__userprofile=user_profile).order_by('id')
+    device_list = Device.objects.filter(client__msp__userprofile=user_profile).order_by('id')
     
     # Pagination for incidents
     incident_paginator = Paginator(incident_list, 50)  # Show 50 incidents per page
@@ -281,10 +280,10 @@ def dashboard_view(request):
     device_page_obj = device_paginator.get_page(device_page_number)
 
     # KPI calculations
-    total_incidents = Incident.objects.count()
-    resolved_incidents = Incident.objects.filter(resolved=True).count()
-    unresolved_incidents = Incident.objects.filter(resolved=False).count()
-    avg_resolution_time = Incident.objects.aggregate(Avg('predicted_resolution_time'))['predicted_resolution_time__avg'] or 0
+    total_incidents = incident_list.count()
+    resolved_incidents = incident_list.filter(resolved=True).count()
+    unresolved_incidents = incident_list.filter(resolved=False).count()
+    avg_resolution_time = incident_list.aggregate(Avg('predicted_resolution_time'))['predicted_resolution_time__avg'] or 0
     severity_counts = Incident.objects.values('severity__level').annotate(count=Count('id'))
 
     context = {
@@ -299,10 +298,14 @@ def dashboard_view(request):
 
     return render(request, 'dashboard.html', context)
 
+@login_required(login_url='/account/login/')
 def generate_custom_report(request):
     # Fetch severity levels and device types (unique values from Device model)
     severities = Severity.objects.all()
-    device_types = Device.objects.values_list('device_type', flat=True).distinct()  # Get unique device types
+    user_profile = request.user.profile  # Get the user profile
+
+    # Fetch unique device types for the user's MSP
+    device_types = Device.objects.filter(client__msp__userprofile=user_profile).values_list('device_type', flat=True).distinct()
 
     if request.method == 'POST':
         start_date = request.POST.get('start_date')
@@ -314,16 +317,15 @@ def generate_custom_report(request):
         # Convert string dates to datetime objects
         start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
         end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
-        
-        # Set end_date to the end of the day
         end_date_obj = end_date_obj.replace(hour=23, minute=59, second=59, microsecond=999999)
 
         # Debugging information
         print(f"Filtering incidents from {start_date_obj} to {end_date_obj}, severity: {severity}, device_type: {device_type}, resolved: {resolved}")
 
-        # Filter incidents
+        # Filter incidents based on user profile and date range
         incidents = Incident.objects.filter(
-            created_at__range=[start_date_obj, end_date_obj]
+            created_at__range=[start_date_obj, end_date_obj],
+            device__client__msp__userprofile=user_profile  # Filter by user profile
         )
 
         if severity != 'all':
@@ -360,3 +362,62 @@ def generate_custom_report(request):
         'severities': severities,
         'device_types': device_types,
     })
+
+def error_404(request, exception):
+    return render(request, '404.html', status=404)
+
+def error_500(request):
+    return render(request, '500.html', status=500)
+
+def incident_list(request):
+    devices = Device.objects.all()  # Get all devices for this example
+    return render(request, 'incident_list.html', {'devices': devices})
+
+# Load models globally to avoid loading them multiple times
+model_time = IncidentMLModel()
+model_time.load_models()  # Load models once at the start
+
+def add_incident(request, device_id):
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+        severity_level = request.POST.get('severity')
+
+        # Fetch the device
+        try:
+            device = Device.objects.get(id=device_id)
+        except Device.DoesNotExist:
+            return redirect('error_page')  # Redirect to an error page or show a message
+        
+        # Fetch the severity
+        try:
+            severity = Severity.objects.get(level=str(severity_level).capitalize())
+        except Severity.DoesNotExist:
+            return redirect('error_page')  # Redirect to an error page or show a message
+
+        # Create the incident (basic info first)
+        incident = Incident.objects.create(
+            title=title,
+            description=description,
+            severity=severity,
+            resolved=False,
+            device=device
+        )
+        print(incident)
+
+        # Predict resolution time and description using the incident object directly
+        predicted_time = model_time.predict_time(incident)  # Pass the incident object
+        predicted_desc = model_time.predict_solution(incident)  # Pass the incident object
+        
+        # Log the predictions vs actual values
+        print(f"Predicted Resolution Time: {predicted_time} minutes")
+        print(f"Predicted Description: {predicted_desc}")
+        # Update incident with predictions
+        incident.predicted_resolution_time = predicted_time
+        incident.description = predicted_desc
+        incident.save()
+
+        return redirect('incident_list')
+
+    return render(request, 'add_incident.html', {'device_id': device_id})
+

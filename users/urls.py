@@ -38,4 +38,7 @@ urlpatterns = [
     path('dashboard/', dashboard_view, name='dashboard'),
     
     path('custom-report/', generate_custom_report, name='generate_custom_report'),
+    
+    # path('incident-list/', incident_list, name='incident_list'),
+    # path('add-incident/<int:device_id>/', add_incident, name='add_incident'),
 ]
