@@ -11,6 +11,9 @@ from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import authenticate, login
 from django.views.decorators.csrf import csrf_exempt
+from django.shortcuts import redirect, get_object_or_404
+from django.core.paginator import Paginator
+from django.views.generic import TemplateView
 
 # Home view (rendering an HTML page)
 def home(request):
@@ -163,3 +166,85 @@ def create_incident(request, device_id):
         return JsonResponse({'id': incident.id, 'title': incident.title, 'description': incident.description, 'resolved': incident.resolved, 'created_at': incident.created_at})
     else:
         return JsonResponse({'error': 'Invalid data'}, status=400)
+
+
+
+# @method_decorator(login_required(login_url='/account/login/'), name='dispatch')
+# class MSPListView(TemplateView):
+#     template_name = 'msp_list.html'
+    
+#     def get_queryset(self):
+#         # Get the user's profile and filter MSPs based on the associated user
+#         user_profile = self.request.user.profile
+#         return MSP.objects.filter(userprofile=user_profile)
+    
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         # Pass the filtered MSPs to the context
+#         context['msps'] = self.get_queryset()
+#         return context
+
+
+# @method_decorator(login_required(login_url='/account/login/'), name='dispatch')
+# class MSPDetailView(TemplateView):
+#     template_name = 'msp_detail.html'
+    
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         msp_id = self.kwargs['pk']  # Get the MSP ID from the URL
+#         context['msp'] = MSP.objects.get(id=msp_id, userprofile=self.request.user.profile)
+#         return context
+
+
+# @method_decorator(login_required(login_url='/account/login/'), name='dispatch')
+# class ClientListView(TemplateView):
+#     template_name = 'client_list_create.html'
+
+#     def get_queryset(self):
+#         user_profile = self.request.user.profile
+#         return Client.objects.filter(msp__userprofile=user_profile)
+    
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         msp_id = self.kwargs.get('msp_id')  # Get the MSP ID from the URL
+#         context['clients'] = Client.objects.filter(msp__id=msp_id, msp__userprofile=self.request.user.profile)
+#         context['msp_id'] = msp_id  # Pass the MSP ID to the context if needed
+#         return context
+
+
+# @method_decorator(login_required(login_url='/account/login/'), name='dispatch')
+# class ClientDetailView(TemplateView):
+#     template_name = 'client_detail.html'
+
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         client_id = self.kwargs['pk']  # Get the Client ID from the URL
+#         context['client'] = Client.objects.get(id=client_id, msp__userprofile=self.request.user.profile)
+#         return context
+
+
+# @method_decorator(login_required(login_url='/account/login/'), name='dispatch')
+# class DeviceListView(TemplateView):
+#     template_name = 'device_list_create.html'
+
+#     def get_queryset(self):
+#         user_profile = self.request.user.profile
+#         return Device.objects.filter(client__msp__userprofile=user_profile)
+    
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         client_id = self.kwargs.get('client_id')  # Get the Client ID from the URL
+#         context['devices'] = Device.objects.filter(client__id=client_id, client__msp__userprofile=self.request.user.profile)
+#         context['client_id'] = client_id  # Pass the Client ID to the context if needed
+#         return context
+
+
+# @method_decorator(login_required(login_url='/account/login/'), name='dispatch')
+# class DeviceDetailView(TemplateView):
+#     template_name = 'device_detail.html'
+
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         device_id = self.kwargs['pk']  # Get the Device ID from the URL
+#         context['incidents'] = Incident.objects.filter(device__id=device_id)  # Fetch incidents related to the device
+#         return context
