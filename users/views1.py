@@ -25,6 +25,7 @@ import pandas as pd
 from datetime import datetime
 from django.shortcuts import redirect
 from django.core.paginator import Paginator
+from .tasks import retrain_model  # Import the retrain function
 
 
 class RegisterViewAPI(APIView):
@@ -84,7 +85,7 @@ class LoginViewAPI(CreateAPIView):
             user = authenticate(username=username, password=password)
             if user is not None:
                 login(request, user)
-                return render(request, 'dashboard.html')
+                return redirect('/v1/dashboard/')  # Adjust the URL as needed
             else:
                 return Response({'message':"Invalid username or password"},status=status.HTTP_401_UNAUTHORIZED)
 
@@ -179,6 +180,11 @@ class IncidentListView(generics.ListCreateAPIView):
         incident.predicted_resolution_time = predicted_time
         incident.recommended_solution = predicted_desc
         incident.save()
+        
+        # Trigger model retraining conditionally or periodically
+        # For example, every 10 incidents
+        if Incident.objects.count() % 5 == 0:
+            retrain_model()
 
         # Prepare the response data
         response_data = {
