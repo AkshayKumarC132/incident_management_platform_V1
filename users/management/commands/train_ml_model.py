@@ -10,13 +10,17 @@ class Command(BaseCommand):
 
         # Load existing incidents from the database
         incidents = Incident.objects.all()
+        for incident in incidents:
+            if incident.recommended_solution is None or incident.predicted_resolution_time is None:
+                print(f"Missing data in incident {incident.id}")
 
         if incidents.exists():
-            print("Building solution recommendation model...")
-            ml_model.train(incidents)
+            incidents = Incident.objects.all()
 
-            # Save the trained models
-            ml_model.save_models()
+            # Train the models and save them
+            ml_model.train()
+            ml_model.save_model()
+
             print("Models saved successfully.")
         else:
             print("No incidents available for training.")

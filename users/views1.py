@@ -158,33 +158,47 @@ class IncidentListView(generics.ListCreateAPIView):
     def get_queryset(self):
         user_profile = self.request.user.profile
         return Incident.objects.filter(device__client__msp__userprofile=user_profile)
-    
+
     def perform_create(self, serializer):
         incident = serializer.save()
-        model_time = IncidentMLModel()
-        model_time.load_models()  # Load models once at the start
 
+        # Prepare incident data for predictions
+        incident_data = {
+            'title': incident.title,
+            'description': incident.description,
+            'device_id': incident.device.id if incident.device else None,
+            'severity_id': incident.severity.id if incident.severity else None,
+        }
+
+        # Initialize the ML model
+        ml_model = IncidentMLModel()
+        
+
+        # Make predictions using the trained model
         try:
-            # Predict resolution time and description using the incident object directly
-            predicted_time = model_time.predict_time(incident)  # Pass the incident object
-            predicted_desc = model_time.predict_solution(incident)  # Pass the incident object
+            if ml_model.time_model and ml_model.solution_model:  # Ensure models are trained
+                predicted_time = ml_model.predict_time(incident_data)
+                predicted_desc = ml_model.predict_solution(incident_data)
+            else:
+                predicted_time = 1.0  # Default resolution time
+                predicted_desc = "No prediction available"
+
+            # Log the predictions
+            print(f"Predicted Resolution Time: {predicted_time} minutes")
+            print(f"Predicted Description: {predicted_desc}")
+        
+
         except Exception as e:
             print(f"Prediction error: {e}")
-            predicted_desc = "No prediction available"
-            predicted_time = 1.0  # Default resolution time
-        
-        # Log the predictions vs actual values
-        print(f"Predicted Resolution Time: {predicted_time} minutes")
-        print(f"Predicted Description: {predicted_desc}")
+
         # Update incident with predictions
         incident.predicted_resolution_time = predicted_time
         incident.recommended_solution = predicted_desc
         incident.save()
-        
-        # Trigger model retraining conditionally or periodically
-        # For example, every 10 incidents
+
+        # Retrain model conditionally
         if Incident.objects.count() % 5 == 0:
-            retrain_model()
+            ml_model.train()  # Retrain model every 5 incidents
 
         # Prepare the response data
         response_data = {
@@ -197,20 +211,18 @@ class IncidentListView(generics.ListCreateAPIView):
             "predicted_resolution_time": incident.predicted_resolution_time,
             "device": incident.device.id if incident.device else None,
             "severity": incident.severity,
-            "device_type": incident.device.device_type if incident.device else None,  # Safely access device_type
+            "device_type": incident.device.device_type if incident.device else None,
         }
 
         # Clean response data to handle NaN
         cleaned_response = self.clean_response(response_data)
-
         return Response(cleaned_response)
 
     def clean_response(self, data):
         # Replace NaN with None or a default value
         return {key: (value if not isinstance(value, float) or not math.isnan(value) else None) 
                 for key, value in data.items()}
-
-
+        
 @method_decorator(login_required(login_url='/account/login/'), name='dispatch')
 class IncidentDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = IncidentSerializer
@@ -380,50 +392,50 @@ def incident_list(request):
     return render(request, 'incident_list.html', {'devices': devices})
 
 # Load models globally to avoid loading them multiple times
-model_time = IncidentMLModel()
-model_time.load_models()  # Load models once at the start
+# model_time = IncidentMLModel()
+# model_time.load_models()  # Load models once at the start
 
-def add_incident(request, device_id):
-    if request.method == 'POST':
-        title = request.POST.get('title')
-        description = request.POST.get('description')
-        severity_level = request.POST.get('severity')
+# def add_incident(request, device_id):
+#     if request.method == 'POST':
+#         title = request.POST.get('title')
+#         description = request.POST.get('description')
+#         severity_level = request.POST.get('severity')
 
-        # Fetch the device
-        try:
-            device = Device.objects.get(id=device_id)
-        except Device.DoesNotExist:
-            return redirect('error_page')  # Redirect to an error page or show a message
+#         # Fetch the device
+#         try:
+#             device = Device.objects.get(id=device_id)
+#         except Device.DoesNotExist:
+#             return redirect('error_page')  # Redirect to an error page or show a message
         
-        # Fetch the severity
-        try:
-            severity = Severity.objects.get(level=str(severity_level).capitalize())
-        except Severity.DoesNotExist:
-            return redirect('error_page')  # Redirect to an error page or show a message
+#         # Fetch the severity
+#         try:
+#             severity = Severity.objects.get(level=str(severity_level).capitalize())
+#         except Severity.DoesNotExist:
+#             return redirect('error_page')  # Redirect to an error page or show a message
 
-        # Create the incident (basic info first)
-        incident = Incident.objects.create(
-            title=title,
-            description=description,
-            severity=severity,
-            resolved=False,
-            device=device
-        )
-        print(incident)
+#         # Create the incident (basic info first)
+#         incident = Incident.objects.create(
+#             title=title,
+#             description=description,
+#             severity=severity,
+#             resolved=False,
+#             device=device
+#         )
+#         print(incident)
 
-        # Predict resolution time and description using the incident object directly
-        predicted_time = model_time.predict_time(incident)  # Pass the incident object
-        predicted_desc = model_time.predict_solution(incident)  # Pass the incident object
+#         # Predict resolution time and description using the incident object directly
+#         predicted_time = model_time.predict_time(incident)  # Pass the incident object
+#         predicted_desc = model_time.predict_solution(incident)  # Pass the incident object
         
-        # Log the predictions vs actual values
-        print(f"Predicted Resolution Time: {predicted_time} minutes")
-        print(f"Predicted Description: {predicted_desc}")
-        # Update incident with predictions
-        incident.predicted_resolution_time = predicted_time
-        incident.description = predicted_desc
-        incident.save()
+#         # Log the predictions vs actual values
+#         print(f"Predicted Resolution Time: {predicted_time} minutes")
+#         print(f"Predicted Description: {predicted_desc}")
+#         # Update incident with predictions
+#         incident.predicted_resolution_time = predicted_time
+#         incident.description = predicted_desc
+#         incident.save()
 
-        return redirect('incident_list')
+#         return redirect('incident_list')
 
-    return render(request, 'add_incident.html', {'device_id': device_id})
+#     return render(request, 'add_incident.html', {'device_id': device_id})
 

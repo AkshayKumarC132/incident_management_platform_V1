@@ -51,7 +51,7 @@ def main():
     ml_model.train(X, y_solution, y_time)
 
     # Save the trained models
-    ml_model.save_models('solution_model.pkl', 'time_model.pkl')
+    ml_model.save_model('solution_model.pkl', 'time_model.pkl')
 
 if __name__ == "__main__":
     main()
